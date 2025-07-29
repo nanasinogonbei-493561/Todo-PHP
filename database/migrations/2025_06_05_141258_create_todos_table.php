@@ -9,13 +9,13 @@ return new class extends Migration
 */
 public function up(): void
 {
-Schema::create('todos', function (Blueprint $table) {
-$table->id();
-$table->string('title');
-$table->text('description')->nullable();
-$table->foreignId('user_id')->constrained()->onDelete('cascade');
-$table->timestamps();
-});
+    Schema::create('todos', function (Blueprint $table) {
+        $table->id();
+        $table->string('title');
+        $table->text('description')->nullable();
+        $table->foreignId('user_id')->constrained()->onDelete('cascade');
+        $table->timestamps();
+    });
 }
 /**
  * Reverse the migrations.
