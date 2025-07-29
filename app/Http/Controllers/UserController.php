@@ -5,9 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
+
 class UserController extends Controller
 {
-    //
+    // ログインフォーム表示
     public function showLoginForm()
     {
         return  view('auth.login');
@@ -15,6 +20,8 @@ class UserController extends Controller
 
     public function login(Request $request)
     {
+
+        
         $email = $request->input('email');
 
 
