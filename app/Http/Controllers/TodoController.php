@@ -35,6 +35,13 @@ class TodoController extends Controller
         return redirect()->route('todos.index');
     }
 
+    // 詳細表示（必要に応じて追加）
+    public function show($id)
+    {
+        $todo = Todo::findOrFail($id);
+        return view('todos.show', compact('todo'));
+    }
+
     // 編集フォーム表示
     public function edit($id)
     {
