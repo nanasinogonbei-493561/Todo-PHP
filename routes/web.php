@@ -2,10 +2,13 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\TodoController;
 
-Route::get('/', function () {
-    return view('index.php');
-});
+// ホーム画面をTodo一覧に変更
+Route::get('/', [TodoController::class, 'index'])->name('todos.index');
+
+// Todo関連のルート追加
+Route::resource('todos', TodoController::class);
 
 Route::get('/dashboard', function () {
     return view('dashboard');

@@ -29,6 +29,7 @@ class TodoController extends Controller
 
         Todo::create([
             'title' => $request->title,
+            'user_id' => auth()->id() ?? 1, // 認証されていない場合はデフォルトユーザーID
         ]);
 
         return redirect()->route('todos.index');

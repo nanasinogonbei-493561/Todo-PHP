@@ -11,11 +11,11 @@ margin: 0;
 padding: 20px;
 }
 h1 {
-}
-}
 margin-bottom: 20px;
+}
 .todo-container {
 max-width: 800px;
+}
 .todo-item {
 border: 1px solid #ddd;
 padding: 10px;
@@ -67,7 +67,7 @@ display: inline;
 <div class="create-btn">
 <a href="{{ route('todos.create') }}" class="btn btn-primary">新規作成</a>
 </div>
-@if(count($todos) > 0)
+@if($todos && count($todos) > 0)
 @foreach($todos as $todo)
 <div class="todo-item">
 <div class="todo-title">{{ $todo->title }}</div>
@@ -75,8 +75,7 @@ display: inline;
 <div class="todo-description">{{ $todo->description }}</div>
 @endif
 <div class="todo-actions">
-<a href="{{ route('todos.edit', $todo->id) }}" class="btn btn-
-warning">編集</a>
+<a href="{{ route('todos.edit', $todo->id) }}" class="btn btn-warning">編集</a>
 <form action="{{ route('todos.destroy', $todo->id) }}"
 method="POST" onsubmit="return confirm('本当に削除しますか？');">
 @csrf
@@ -87,8 +86,8 @@ method="POST" onsubmit="return confirm('本当に削除しますか？');">
 </div>
 @endforeach
 @else
+<p>Todoがありません。</p>
 @endif
 </div>
 </body>
 </html>
-<p>Todoがありません。</p>
