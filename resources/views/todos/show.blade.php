@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo作成</title>
+    <title>Todo詳細</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -16,22 +16,27 @@
         .todo-container {
             max-width: 800px;
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="text"], textarea {
-            width: 100%;
-            padding: 8px;
+        .todo-item {
             border: 1px solid #ddd;
-            border-radius: 3px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
         }
-        textarea {
-            height: 100px;
+        .todo-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .todo-description {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        .todo-meta {
+            color: #999;
+            font-size: 0.9em;
+            margin-bottom: 20px;
         }
         .btn {
             display: inline-block;
@@ -41,19 +46,20 @@
             border: none;
             border-radius: 3px;
             cursor: pointer;
+            margin-right: 10px;
         }
         .btn-primary {
             background-color: #007bff;
+        }
+        .btn-warning {
+            background-color: #ffc107;
+            color: #000;
         }
         .btn-secondary {
             background-color: #6c757d;
         }
         .btn-logout {
             background-color: #6c757d;
-        }
-        .error {
-            color: #dc3545;
-            margin-top: 5px;
         }
         .header {
             display: flex;
@@ -75,7 +81,7 @@
 <body>
     <div class="todo-container">
         <div class="header">
-            <h1>Todo作成</h1>
+            <h1>Todo詳細</h1>
             <div class="user-info">
                 <span>ようこそ、{{ Auth::user()->name ?? Auth::user()->email }}さん</span>
                 <form action="{{ route('logout') }}" method="POST" style="display: inline;">
@@ -85,38 +91,22 @@
             </div>
         </div>
 
-        {{-- バリデーションエラーの表示 --}}
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+        <div class="todo-item">
+            <div class="todo-title">{{ $todo->title }}</div>
+            @if($todo->description)
+                <div class="todo-description">{{ $todo->description }}</div>
+            @else
+                <div class="todo-description">説明はありません。</div>
+            @endif
+            <div class="todo-meta">
+                作成日: {{ $todo->created_at->format('Y年m月d日 H:i') }}<br>
+                更新日: {{ $todo->updated_at->format('Y年m月d日 H:i') }}
             </div>
-        @endif
-
-        <form action="{{ route('todos.store') }}" method="POST">
-            @csrf
-
-            <div class="form-group">
-                <label for="title">タイトル</label>
-                <input type="text" id="title" name="title" value="{{ old('title') }}">
-                @error('title')
-                    <div class="error">{{ $message }}</div>
-                @enderror
+            <div class="todo-actions">
+                <a href="{{ route('todos.edit', $todo->id) }}" class="btn btn-warning">編集</a>
+                <a href="{{ route('todos.index') }}" class="btn btn-secondary">一覧に戻る</a>
             </div>
-
-            <div class="form-group">
-                <label for="description">説明（オプション）</label>
-                <textarea id="description" name="description">{{ old('description') }}</textarea>
-            </div>
-
-            <div class="form-group">
-                <button type="submit" class="btn btn-primary">保存</button>
-                <a href="{{ route('todos.index') }}" class="btn btn-secondary">キャンセル</a>
-            </div>
-        </form>
+        </div>
     </div>
 </body>
-</html>
+</html> 

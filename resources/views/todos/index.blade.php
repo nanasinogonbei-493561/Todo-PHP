@@ -49,6 +49,24 @@ color: #000;
 .btn-danger {
 background-color: #dc3545;
 }
+.btn-logout {
+background-color: #6c757d;
+}
+}
+.header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 20px;
+}
+.user-info {
+display: flex;
+align-items: center;
+gap: 15px;
+}
+.user-info span {
+color: #333;
+font-weight: 500;
 }
 .create-btn {
 margin-bottom: 20px;
@@ -63,7 +81,16 @@ display: inline;
 {{ session('user_name')}}
 
 <div class="todo-container">
-<h1>Todo一覧</h1>
+<div class="header">
+    <h1>Todo一覧</h1>
+    <div class="user-info">
+        <span>ようこそ、{{ Auth::user()->name ?? Auth::user()->email }}さん</span>
+        <form action="{{ route('logout') }}" method="POST" style="display: inline;">
+            @csrf
+            <button type="submit" class="btn btn-logout" onclick="return confirm('ログアウトしますか？')">ログアウト</button>
+        </form>
+    </div>
+</div>
 <div class="create-btn">
 <a href="{{ route('todos.create') }}" class="btn btn-primary">新規作成</a>
 </div>
@@ -75,6 +102,7 @@ display: inline;
 <div class="todo-description">{{ $todo->description }}</div>
 @endif
 <div class="todo-actions">
+<a href="{{ route('todos.show', $todo->id) }}" class="btn btn-primary">詳細</a>
 <a href="{{ route('todos.edit', $todo->id) }}" class="btn btn-warning">編集</a>
 <form action="{{ route('todos.destroy', $todo->id) }}"
 method="POST" onsubmit="return confirm('本当に削除しますか？');">

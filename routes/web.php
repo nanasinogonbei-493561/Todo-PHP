@@ -4,11 +4,14 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TodoController;
 
-// ホーム画面をTodo一覧に変更
-Route::get('/', [TodoController::class, 'index'])->name('todos.index');
-
-// Todo関連のルート追加
-Route::resource('todos', TodoController::class);
+// 認証が必要なルートグループ
+Route::middleware(['auth'])->group(function () {
+    // ホーム画面をTodo一覧に変更
+    Route::get('/', [TodoController::class, 'index'])->name('todos.index');
+    
+    // Todo関連のルート追加
+    Route::resource('todos', TodoController::class);
+});
 
 // ダッシュボード
 Route::get('/dashboard', function () {
