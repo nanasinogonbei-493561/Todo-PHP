@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Helpers\StructuredLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,7 +29,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // ログイン成功を記録
+        StructuredLogger::userAction('user_login', [
+            'user_id' => Auth::id(),
+            'user_email' => Auth::user()->email,
+            'ip_address' => $request->ip()
+        ]);
+
+        return redirect()->intended(route('todos.index', absolute: false));
     }
 
     /**
@@ -36,12 +44,23 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        // ログアウト前のユーザー情報を記録
+        $userId = Auth::id();
+        $userEmail = Auth::user()?->email;
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        // ログアウトを記録
+        StructuredLogger::userAction('user_logout', [
+            'user_id' => $userId,
+            'user_email' => $userEmail,
+            'ip_address' => $request->ip()
+        ]);
+
+        return redirect('/login');
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Todo;
+use App\Helpers\StructuredLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,11 +12,20 @@ class TodoController extends Controller
     // 一覧表示
     public function index()
     {
-        if (Auth::check()) {
-            $todos = Auth::user()->todos; // ユーザーのTodoのみ取得
-        } else {
-            $todos = collect(); // 空のコレクション
-        }
+        $startTime = microtime(true);
+        
+        $todos = Auth::user()->todos; // 認証済みユーザーのTodoのみ取得
+        
+        $duration = microtime(true) - $startTime;
+        StructuredLogger::performance('todo_index', $duration, [
+            'todo_count' => $todos->count(),
+            'user_authenticated' => true
+        ]);
+        
+        StructuredLogger::userAction('view_todo_list', [
+            'todo_count' => $todos->count()
+        ]);
+        
         return view('todos.index', compact('todos'));
     }
 
@@ -28,85 +38,131 @@ class TodoController extends Controller
     // 新規作成処理
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string', 
-        ]);
+        try {
+            $startTime = microtime(true);
+            
+            $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string', 
+            ]);
 
-        if (Auth::check()) {
+            $todoData = [
+                'title' => $request->title,
+                'description' => $request->description,
+            ];
+
             // 認証済みユーザーに紐づけて作成
-            Auth::user()->todos()->create([
-                'title' => $request->title,
-                'description' => $request->description,
-            ]);
-        } else {
-            // 認証されていない場合はデフォルトユーザーIDで作成
-            Todo::create([
-                'title' => $request->title,
-                'description' => $request->description,
-                'user_id' => 1,
-            ]);
-        }
+            $todo = Auth::user()->todos()->create($todoData);
 
-        return redirect()->route('todos.index')
-        ->with('success', 'Todoが作成されました');
+            $duration = microtime(true) - $startTime;
+            StructuredLogger::performance('todo_create', $duration);
+            StructuredLogger::database('create', 'todos', $todoData, $duration);
+            StructuredLogger::userAction('create_todo', [
+                'todo_id' => $todo->id,
+                'title' => $todo->title
+            ]);
+
+            return redirect()->route('todos.index')
+            ->with('success', 'Todoが作成されました');
+            
+        } catch (\Exception $e) {
+            StructuredLogger::error('Failed to create todo', $e, [
+                'title' => $request->title,
+                'description' => $request->description
+            ]);
+            throw $e;
+        }
     }
 
     // 詳細表示（必要に応じて追加）
     public function show($id)
     {
-        $todo = Todo::findOrFail($id);
+        $todo = Auth::user()->todos()->findOrFail($id);
         return view('todos.show', compact('todo'));
     }
 
     // 編集フォーム表示
     public function edit($id)
     {
-        if (Auth::check()) {
-            // ユーザーのTodoのみ取得
-            $todo = Auth::user()->todos()->findOrFail($id);
-        } else {
-            // 認証されていない場合は全Todoから取得
-            $todo = Todo::findOrFail($id);
-        }
+        // 認証済みユーザーのTodoのみ取得
+        $todo = Auth::user()->todos()->findOrFail($id);
         return view('todos.edit', compact('todo'));
     }
 
     // 更新処理
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string', 
-        ]);
+        try {
+            $startTime = microtime(true);
+            
+            $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string', 
+            ]);
 
-        if (Auth::check()) {
             $todo = Auth::user()->todos()->findOrFail($id);
-        } else {
-            $todo = Todo::findOrFail($id);
-        }
-        
-        $todo->update([
-            'title' => $request->title, 
-            'description' => $request->description, 
-        ]);
+            
+            $updateData = [
+                'title' => $request->title, 
+                'description' => $request->description, 
+            ];
+            
+            $todo->update($updateData);
 
-        return redirect()->route('todos.index')
-        ->with('success', 'Todoが更新されました');
+            $duration = microtime(true) - $startTime;
+            StructuredLogger::performance('todo_update', $duration);
+            StructuredLogger::database('update', 'todos', $updateData, $duration);
+            StructuredLogger::userAction('update_todo', [
+                'todo_id' => $todo->id,
+                'title' => $todo->title
+            ]);
+
+            return redirect()->route('todos.index')
+            ->with('success', 'Todoが更新されました');
+            
+        } catch (\Exception $e) {
+            StructuredLogger::error('Failed to update todo', $e, [
+                'todo_id' => $id,
+                'title' => $request->title,
+                'description' => $request->description
+            ]);
+            throw $e;
+        }
     }
 
     // 削除処理
     public function destroy($id)
     {
-        if (Auth::check()) {
+        try {
+            $startTime = microtime(true);
+            
             $todo = Auth::user()->todos()->findOrFail($id);
-        } else {
-            $todo = Todo::findOrFail($id);
-        }
-        $todo->delete();
+            
+            $todoData = [
+                'id' => $todo->id,
+                'title' => $todo->title,
+                'description' => $todo->description
+            ];
+            
+            $todo->delete();
 
-        return redirect()->route('todos.index')
-        ->with('success', 'Todoが削除されました');
+            $duration = microtime(true) - $startTime;
+            StructuredLogger::performance('todo_delete', $duration);
+            StructuredLogger::database('delete', 'todos', $todoData, $duration);
+            StructuredLogger::userAction('delete_todo', [
+                'todo_id' => $todoData['id'],
+                'title' => $todoData['title']
+            ]);
+
+            return redirect()->route('todos.index')
+            ->with('success', 'Todoが削除されました');
+            
+        } catch (\Exception $e) {
+            StructuredLogger::error('Failed to delete todo', $e, [
+                'todo_id' => $id
+            ]);
+            throw $e;
+        }
     }
 }
 
